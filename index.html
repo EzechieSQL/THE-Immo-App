@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulateur DSCR - Proto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+    input {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border-radius: 0.5rem;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+      margin-bottom: 1rem;
+    }
+    button {
+      padding: 0.6rem 1rem;
+      border-radius: 999px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      background: #22c55e;
+      color: #022c22;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+    .result {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: #020617;
+      border: 1px solid #1f2937;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+    .badge-ok {
+      background: #16a34a33;
+      color: #4ade80;
+      border: 1px solid #16a34a;
+    }
+    .badge-ko {
+      background: #b91c1c33;
+      color: #f97373;
+      border: 1px solid #b91c1c;
+    }
+    .error {
+      margin-top: 1rem;
+      color: #fda4af;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simulateur DSCR – Prototype</h1>
+
+  <label for="projectId">ID du projet (UUID Supabase)</label>
+  <input id="projectId" type="text" placeholder="0a246432-c408-41c8-806b-14a0b4143444" />
+
+  <button id="btn">Calculer le DSCR</button>
+
+  <div id="result" class="result" style="display:none;"></div>
+  <div id="error" class="error"></div>
+
+  <script>
+    const SUPABASE_URL = "https://nylytnalebcrrjnqbdmy.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55bHl0bmFsZWJjcnJqbnFiZG15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0OTU3NDEsImV4cCI6MjA4MDA3MTc0MX0.t4vtBLYCA29KZwD2Q6aPwlnk5LeewXigGo1uE--eNxU";
+
+    const btn = document.getElementById("btn");
+    const resultDiv = document.getElementById("result");
+    const errorDiv = document.getElementById("error");
+    const input = document.getElementById("projectId");
+
+    async function calculate() {
+      const projectId = input.value.trim();
+      errorDiv.textContent = "";
+      resultDiv.style.display = "none";
+      resultDiv.textContent = "";
+
+      if (!projectId) {
+        errorDiv.textContent = "Merci de renseigner un ID de projet.";
+        return;
+      }
+
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/rpc/calculate_dscr_and_get_metrics`,
+          {
+            method: "POST",
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ p_project_id: projectId })
+          }
+        );
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Erreur API (${response.status}) : ${text}`);
+        }
+
+        const data = await response.json();
+
+        const dscr = Number(data.dscr).toFixed(3);
+        const monthly = Number(data.monthly_cashflow).toFixed(2);
+        const annual = Number(data.annual_cashflow).toFixed(2);
+        const viable = data.is_viable;
+
+        const badge = viable
+          ? `<span class="badge badge-ok">Projet viable</span>`
+          : `<span class="badge badge-ko">Projet NON viable</span>`;
+
+        resultDiv.innerHTML = `
+          <div><strong>DSCR :</strong> ${dscr} ${badge}</div>
+          <div><strong>Cash-flow mensuel :</strong> ${monthly} €</div>
+          <div><strong>Cash-flow annuel :</strong> ${annual} €</div>
+          <div style="margin-top:0.5rem; font-size:0.8rem; color:#9ca3af;">
+            Calcul basé sur les hypothèses financières du projet stockées dans Supabase.
+          </div>
+        `;
+        resultDiv.style.display = "block";
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    btn.addEventListener("click", calculate);
+  </script>
+</body>
+</html>

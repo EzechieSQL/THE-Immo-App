@@ -5,110 +5,182 @@
   <title>Simulateur DSCR - Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    :root {
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #22c55e;
+      --accent-dark: #15803d;
+      --danger: #ef4444;
+      --danger-soft: #fee2e2;
+      --success-soft: #dcfce7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       max-width: 720px;
-      margin: 2rem auto;
-      padding: 1rem;
-      background: #0f172a;
-      color: #e5e7eb;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+      background: var(--bg);
+      color: var(--text-main);
     }
+
     h1 {
-      font-size: 1.6rem;
-      margin-bottom: 1rem;
+      font-size: 1.7rem;
+      margin-bottom: 0.5rem;
     }
+
     h2 {
       font-size: 1.1rem;
-      margin-top: 1.8rem;
+      margin-top: 1.2rem;
       margin-bottom: 0.6rem;
     }
+
+    .hint {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .section {
+      padding: 1rem;
+      border-radius: 0.9rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      margin-bottom: 0.75rem;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+    }
+
     label {
       display: block;
-      margin-bottom: 0.3rem;
+      margin-bottom: 0.25rem;
       font-size: 0.85rem;
-      color: #9ca3af;
+      color: var(--text-muted);
     }
+
     input {
       width: 100%;
-      padding: 0.55rem 0.8rem;
-      border-radius: 0.5rem;
-      border: 1px solid #4b5563;
-      background: #020617;
-      color: #e5e7eb;
-      margin-bottom: 0.7rem;
+      padding: 0.6rem 0.8rem;
+      border-radius: 0.7rem;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text-main);
       font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      margin-bottom: 0.7rem;
+      -webkit-appearance: none;
+      appearance: none;
     }
+
+    input:focus {
+      border-color: #a5b4fc;
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.35);
+      background: #f9fafb;
+    }
+
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 0.75rem 1rem;
+      grid-template-columns: 1fr;
+      gap: 0.5rem 1rem;
     }
+
+    @media (min-width: 768px) {
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
     button {
-      padding: 0.7rem 1.4rem;
+      padding: 0.75rem 1.6rem;
       border-radius: 999px;
       border: none;
       font-weight: 600;
       cursor: pointer;
-      background: #22c55e;
+      background: linear-gradient(135deg, var(--accent), #4ade80);
       color: #022c22;
       margin-top: 1rem;
+      font-size: 0.95rem;
+      box-shadow: 0 10px 18px rgba(34, 197, 94, 0.35);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
     }
+
+    button span.icon {
+      font-size: 1rem;
+    }
+
     button:disabled {
-      opacity: 0.5;
+      opacity: 0.55;
       cursor: wait;
+      box-shadow: none;
     }
+
     .result {
       margin-top: 1.5rem;
       padding: 1rem;
-      border-radius: 0.75rem;
-      background: #020617;
-      border: 1px solid #1f2937;
-      font-size: 0.9rem;
-      line-height: 1.4;
+      border-radius: 0.9rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
     }
+
     .badge {
-      display: inline-block;
-      padding: 0.25rem 0.6rem;
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.7rem;
       border-radius: 999px;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       font-weight: 600;
       margin-left: 0.5rem;
     }
+
     .badge-ok {
-      background: #16a34a33;
-      color: #4ade80;
+      background: var(--success-soft);
+      color: var(--accent-dark);
       border: 1px solid #16a34a;
     }
+
     .badge-ko {
-      background: #b91c1c33;
-      color: #f97373;
-      border: 1px solid #b91c1c;
+      background: var(--danger-soft);
+      color: #b91c1c;
+      border: 1px solid #f87171;
     }
+
     .error {
-      margin-top: 1rem;
-      color: #fda4af;
+      margin-top: 0.8rem;
+      color: var(--danger);
       font-size: 0.85rem;
     }
-    .hint {
-      font-size: 0.75rem;
-      color: #9ca3af;
-      margin-bottom: 0.5rem;
+
+    code {
+      font-size: 0.8rem;
+      background: #f3f4f6;
+      padding: 0.1rem 0.35rem;
+      border-radius: 0.35rem;
     }
-    .section {
-      padding: 0.9rem;
-      border-radius: 0.75rem;
-      background: #020617;
-      border: 1px solid #1f2937;
-      margin-bottom: 0.5rem;
+
+    .subnote {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
     }
   </style>
 </head>
 <body>
   <h1>Simulateur DSCR – Prototype</h1>
   <p class="hint">
-    Remplis les données principales du projet, puis clique sur
-    <strong>Calculer le DSCR</strong>. Le projet est créé dans Supabase, les
-    hypothèses sont enregistrées, puis le DSCR est calculé côté back-end.
+    Version simplifiée : tu saisis les données principales du projet, on enregistre
+    tout dans Supabase et on calcule le DSCR côté back-end.
   </p>
 
   <div class="section">
@@ -119,7 +191,7 @@
 
   <div class="section">
     <h2>Acquisition</h2>
-    <div class="grid">
+    <div class="grid grid-2">
       <div>
         <label for="purchasePrice">Prix d'achat (€) *</label>
         <input id="purchasePrice" type="number" inputmode="decimal" />
@@ -133,11 +205,14 @@
         <input id="worksBudget" type="number" inputmode="decimal" />
       </div>
     </div>
+    <p class="subnote">
+      Pour une version plus avancée, on ajoutera la fiscalité, les frais d'agence, etc.
+    </p>
   </div>
 
   <div class="section">
     <h2>Revenus & charges mensuels</h2>
-    <div class="grid">
+    <div class="grid grid-2">
       <div>
         <label for="rentMonthly">Loyers bruts mensuels (€) *</label>
         <input id="rentMonthly" type="number" inputmode="decimal" />
@@ -145,14 +220,6 @@
       <div>
         <label for="chargesMonthly">Charges non récupérables (€)</label>
         <input id="chargesMonthly" type="number" inputmode="decimal" />
-      </div>
-      <div>
-        <label for="otherIncomeMonthly">Autres revenus (€)</label>
-        <input id="otherIncomeMonthly" type="number" inputmode="decimal" />
-      </div>
-      <div>
-        <label for="otherExpensesMonthly">Autres dépenses (€)</label>
-        <input id="otherExpensesMonthly" type="number" inputmode="decimal" />
       </div>
       <div>
         <label for="vacancyRate">Vacance locative (%)</label>
@@ -163,7 +230,7 @@
 
   <div class="section">
     <h2>Financement</h2>
-    <div class="grid">
+    <div class="grid grid-2">
       <div>
         <label for="loanAmount">Montant du prêt (€) *</label>
         <input id="loanAmount" type="number" inputmode="decimal" />
@@ -183,7 +250,10 @@
     </div>
   </div>
 
-  <button id="btnCalc">Créer le projet & calculer le DSCR</button>
+  <button id="btnCalc">
+    <span class="icon">⚙️</span>
+    Créer le projet & calculer le DSCR
+  </button>
 
   <div id="result" class="result" style="display:none;"></div>
   <div id="error" class="error"></div>
@@ -207,8 +277,6 @@
     const worksBudgetEl = document.getElementById("worksBudget");
     const rentMonthlyEl = document.getElementById("rentMonthly");
     const chargesMonthlyEl = document.getElementById("chargesMonthly");
-    const otherIncomeMonthlyEl = document.getElementById("otherIncomeMonthly");
-    const otherExpensesMonthlyEl = document.getElementById("otherExpensesMonthly");
     const vacancyRateEl = document.getElementById("vacancyRate");
     const loanAmountEl = document.getElementById("loanAmount");
     const interestRateEl = document.getElementById("interestRate");
@@ -218,7 +286,7 @@
     let currentUser = null;
 
     function toNumber(value) {
-      if (value === null || value === undefined) return 0;
+      if (value === null || value === undefined || value === "") return 0;
       const str = String(value).replace(",", ".");
       const n = parseFloat(str);
       return isNaN(n) ? 0 : n;
@@ -230,14 +298,12 @@
       const email = "demo-user@immo-app.local";
       const password = "DemoImmo123!";
 
-      // tentative de connexion
       let { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        // si échec, on crée l'utilisateur
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -262,11 +328,15 @@
         return;
       }
 
-      // Champs obligatoires
-      if (!purchasePriceEl.value || !rentMonthlyEl.value || !loanAmountEl.value ||
-          !interestRateEl.value || !loanTermYearsEl.value) {
+      if (
+        !purchasePriceEl.value ||
+        !rentMonthlyEl.value ||
+        !loanAmountEl.value ||
+        !interestRateEl.value ||
+        !loanTermYearsEl.value
+      ) {
         errorDiv.textContent =
-          "Merci de renseigner au minimum : prix d'achat, loyers bruts, montant du prêt, taux et durée.";
+          "Champs obligatoires : prix d'achat, loyers bruts, montant du prêt, taux et durée.";
         return;
       }
 
@@ -275,7 +345,6 @@
       try {
         const user = await ensureAuth();
 
-        // 1) Création du projet
         const { data: projectData, error: projectError } = await supabase
           .from("projects")
           .insert({
@@ -291,7 +360,6 @@
 
         const projectId = projectData.id;
 
-        // 2) Création des hypothèses financières
         const { error: finError } = await supabase.from("project_financials").insert({
           project_id: projectId,
           purchase_price: toNumber(purchasePriceEl.value),
@@ -299,8 +367,8 @@
           works_budget: toNumber(worksBudgetEl.value),
           rent_monthly: toNumber(rentMonthlyEl.value),
           charges_monthly: toNumber(chargesMonthlyEl.value),
-          other_income_monthly: toNumber(otherIncomeMonthlyEl.value),
-          other_expenses_monthly: toNumber(otherExpensesMonthlyEl.value),
+          other_income_monthly: 0,
+          other_expenses_monthly: 0,
           loan_amount: toNumber(loanAmountEl.value),
           interest_rate: toNumber(interestRateEl.value),
           loan_term_years: parseInt(loanTermYearsEl.value || "0", 10),
@@ -310,7 +378,6 @@
 
         if (finError) throw finError;
 
-        // 3) Appel du calcul DSCR + récupération des métriques
         const { data: metrics, error: rpcError } =
           await supabase.rpc("calculate_dscr_and_get_metrics", {
             p_project_id: projectId,
@@ -334,11 +401,10 @@
           </div>
           <div><strong>Cash-flow mensuel :</strong> ${monthly} €</div>
           <div><strong>Cash-flow annuel :</strong> ${annual} €</div>
-          <div style="margin-top:0.5rem; font-size:0.8rem; color:#9ca3af;">
-            Les données du projet et les hypothèses financières ont été enregistrées dans Supabase
-            avant le calcul.
+          <div class="subnote">
+            Les données du projet ont été enregistrées dans Supabase avant le calcul DSCR.
           </div>
-          <div style="margin-top:0.4rem; font-size:0.75rem; color:#6b7280;">
+          <div class="subnote">
             ID projet : <code>${projectId}</code>
           </div>
         `;

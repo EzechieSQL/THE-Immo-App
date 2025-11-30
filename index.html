@@ -2,12 +2,12 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Simulateur DSCR - Proto</title>
+  <title>Simulateur DSCR - Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 600px;
+      max-width: 720px;
       margin: 2rem auto;
       padding: 1rem;
       background: #0f172a;
@@ -17,29 +17,41 @@
       font-size: 1.6rem;
       margin-bottom: 1rem;
     }
+    h2 {
+      font-size: 1.1rem;
+      margin-top: 1.8rem;
+      margin-bottom: 0.6rem;
+    }
     label {
       display: block;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
       color: #9ca3af;
     }
     input {
       width: 100%;
-      padding: 0.6rem 0.8rem;
+      padding: 0.55rem 0.8rem;
       border-radius: 0.5rem;
       border: 1px solid #4b5563;
       background: #020617;
       color: #e5e7eb;
-      margin-bottom: 1rem;
+      margin-bottom: 0.7rem;
+      font-size: 0.9rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.75rem 1rem;
     }
     button {
-      padding: 0.6rem 1rem;
+      padding: 0.7rem 1.4rem;
       border-radius: 999px;
       border: none;
       font-weight: 600;
       cursor: pointer;
       background: #22c55e;
       color: #022c22;
+      margin-top: 1rem;
     }
     button:disabled {
       opacity: 0.5;
@@ -77,89 +89,269 @@
       color: #fda4af;
       font-size: 0.85rem;
     }
+    .hint {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-bottom: 0.5rem;
+    }
+    .section {
+      padding: 0.9rem;
+      border-radius: 0.75rem;
+      background: #020617;
+      border: 1px solid #1f2937;
+      margin-bottom: 0.5rem;
+    }
   </style>
 </head>
 <body>
   <h1>Simulateur DSCR – Prototype</h1>
+  <p class="hint">
+    Remplis les données principales du projet, puis clique sur
+    <strong>Calculer le DSCR</strong>. Le projet est créé dans Supabase, les
+    hypothèses sont enregistrées, puis le DSCR est calculé côté back-end.
+  </p>
 
-  <label for="projectId">ID du projet (UUID Supabase)</label>
-  <input id="projectId" type="text" placeholder="0a246432-c408-41c8-806b-14a0b4143444" />
+  <div class="section">
+    <h2>Informations générales</h2>
+    <label for="projectName">Nom du projet *</label>
+    <input id="projectName" type="text" placeholder="Immeuble 3 lots à Metz" />
+  </div>
 
-  <button id="btn">Calculer le DSCR</button>
+  <div class="section">
+    <h2>Acquisition</h2>
+    <div class="grid">
+      <div>
+        <label for="purchasePrice">Prix d'achat (€) *</label>
+        <input id="purchasePrice" type="number" inputmode="decimal" />
+      </div>
+      <div>
+        <label for="notaryFees">Frais de notaire (€)</label>
+        <input id="notaryFees" type="number" inputmode="decimal" />
+      </div>
+      <div>
+        <label for="worksBudget">Travaux (€)</label>
+        <input id="worksBudget" type="number" inputmode="decimal" />
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Revenus & charges mensuels</h2>
+    <div class="grid">
+      <div>
+        <label for="rentMonthly">Loyers bruts mensuels (€) *</label>
+        <input id="rentMonthly" type="number" inputmode="decimal" />
+      </div>
+      <div>
+        <label for="chargesMonthly">Charges non récupérables (€)</label>
+        <input id="chargesMonthly" type="number" inputmode="decimal" />
+      </div>
+      <div>
+        <label for="otherIncomeMonthly">Autres revenus (€)</label>
+        <input id="otherIncomeMonthly" type="number" inputmode="decimal" />
+      </div>
+      <div>
+        <label for="otherExpensesMonthly">Autres dépenses (€)</label>
+        <input id="otherExpensesMonthly" type="number" inputmode="decimal" />
+      </div>
+      <div>
+        <label for="vacancyRate">Vacance locative (%)</label>
+        <input id="vacancyRate" type="number" inputmode="decimal" placeholder="5" />
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Financement</h2>
+    <div class="grid">
+      <div>
+        <label for="loanAmount">Montant du prêt (€) *</label>
+        <input id="loanAmount" type="number" inputmode="decimal" />
+      </div>
+      <div>
+        <label for="interestRate">Taux d'intérêt annuel (%) *</label>
+        <input id="interestRate" type="number" inputmode="decimal" placeholder="3.5" />
+      </div>
+      <div>
+        <label for="loanTermYears">Durée du prêt (années) *</label>
+        <input id="loanTermYears" type="number" inputmode="decimal" placeholder="20" />
+      </div>
+      <div>
+        <label for="insuranceMonthly">Assurance emprunteur mensuelle (€)</label>
+        <input id="insuranceMonthly" type="number" inputmode="decimal" />
+      </div>
+    </div>
+  </div>
+
+  <button id="btnCalc">Créer le projet & calculer le DSCR</button>
 
   <div id="result" class="result" style="display:none;"></div>
   <div id="error" class="error"></div>
 
+  <!-- SDK Supabase v2 -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://nylytnalebcrrjnqbdmy.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55bHl0bmFsZWJjcnJqbnFiZG15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0OTU3NDEsImV4cCI6MjA4MDA3MTc0MX0.t4vtBLYCA29KZwD2Q6aPwlnk5LeewXigGo1uE--eNxU";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55bHl0bmFsZWJjcnJqbnFiZG15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0OTU3NDEsImV4cCI6MjA4MDA3MTc0MX0.t4vtBLYCA29KZwD2Q6aPwlnk5LeewXigGo1uE--eNxU";
 
-    const btn = document.getElementById("btn");
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const btn = document.getElementById("btnCalc");
     const resultDiv = document.getElementById("result");
     const errorDiv = document.getElementById("error");
-    const input = document.getElementById("projectId");
 
-    async function calculate() {
-      const projectId = input.value.trim();
+    const projectNameEl = document.getElementById("projectName");
+    const purchasePriceEl = document.getElementById("purchasePrice");
+    const notaryFeesEl = document.getElementById("notaryFees");
+    const worksBudgetEl = document.getElementById("worksBudget");
+    const rentMonthlyEl = document.getElementById("rentMonthly");
+    const chargesMonthlyEl = document.getElementById("chargesMonthly");
+    const otherIncomeMonthlyEl = document.getElementById("otherIncomeMonthly");
+    const otherExpensesMonthlyEl = document.getElementById("otherExpensesMonthly");
+    const vacancyRateEl = document.getElementById("vacancyRate");
+    const loanAmountEl = document.getElementById("loanAmount");
+    const interestRateEl = document.getElementById("interestRate");
+    const loanTermYearsEl = document.getElementById("loanTermYears");
+    const insuranceMonthlyEl = document.getElementById("insuranceMonthly");
+
+    let currentUser = null;
+
+    function toNumber(value) {
+      if (value === null || value === undefined) return 0;
+      const str = String(value).replace(",", ".");
+      const n = parseFloat(str);
+      return isNaN(n) ? 0 : n;
+    }
+
+    async function ensureAuth() {
+      if (currentUser) return currentUser;
+
+      const email = "demo-user@immo-app.local";
+      const password = "DemoImmo123!";
+
+      // tentative de connexion
+      let { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        // si échec, on crée l'utilisateur
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (signUpError) throw signUpError;
+        currentUser = signUpData.user;
+        return currentUser;
+      } else {
+        currentUser = data.user;
+        return currentUser;
+      }
+    }
+
+    async function handleCalculate() {
       errorDiv.textContent = "";
       resultDiv.style.display = "none";
-      resultDiv.textContent = "";
+      resultDiv.innerHTML = "";
 
-      if (!projectId) {
-        errorDiv.textContent = "Merci de renseigner un ID de projet.";
+      const name = projectNameEl.value.trim();
+      if (!name) {
+        errorDiv.textContent = "Merci de renseigner un nom de projet.";
+        return;
+      }
+
+      // Champs obligatoires
+      if (!purchasePriceEl.value || !rentMonthlyEl.value || !loanAmountEl.value ||
+          !interestRateEl.value || !loanTermYearsEl.value) {
+        errorDiv.textContent =
+          "Merci de renseigner au minimum : prix d'achat, loyers bruts, montant du prêt, taux et durée.";
         return;
       }
 
       btn.disabled = true;
 
       try {
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/rpc/calculate_dscr_and_get_metrics`,
-          {
-            method: "POST",
-            headers: {
-              apikey: SUPABASE_ANON_KEY,
-              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ p_project_id: projectId })
-          }
-        );
+        const user = await ensureAuth();
 
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`Erreur API (${response.status}) : ${text}`);
-        }
+        // 1) Création du projet
+        const { data: projectData, error: projectError } = await supabase
+          .from("projects")
+          .insert({
+            owner_id: user.id,
+            name,
+            description: null,
+            is_public: false,
+          })
+          .select()
+          .single();
 
-        const data = await response.json();
+        if (projectError) throw projectError;
 
-        const dscr = Number(data.dscr).toFixed(3);
-        const monthly = Number(data.monthly_cashflow).toFixed(2);
-        const annual = Number(data.annual_cashflow).toFixed(2);
-        const viable = data.is_viable;
+        const projectId = projectData.id;
+
+        // 2) Création des hypothèses financières
+        const { error: finError } = await supabase.from("project_financials").insert({
+          project_id: projectId,
+          purchase_price: toNumber(purchasePriceEl.value),
+          notary_fees: toNumber(notaryFeesEl.value),
+          works_budget: toNumber(worksBudgetEl.value),
+          rent_monthly: toNumber(rentMonthlyEl.value),
+          charges_monthly: toNumber(chargesMonthlyEl.value),
+          other_income_monthly: toNumber(otherIncomeMonthlyEl.value),
+          other_expenses_monthly: toNumber(otherExpensesMonthlyEl.value),
+          loan_amount: toNumber(loanAmountEl.value),
+          interest_rate: toNumber(interestRateEl.value),
+          loan_term_years: parseInt(loanTermYearsEl.value || "0", 10),
+          insurance_monthly: toNumber(insuranceMonthlyEl.value),
+          vacancy_rate: toNumber(vacancyRateEl.value),
+        });
+
+        if (finError) throw finError;
+
+        // 3) Appel du calcul DSCR + récupération des métriques
+        const { data: metrics, error: rpcError } =
+          await supabase.rpc("calculate_dscr_and_get_metrics", {
+            p_project_id: projectId,
+          });
+
+        if (rpcError) throw rpcError;
+
+        const dscr = Number(metrics.dscr).toFixed(3);
+        const monthly = Number(metrics.monthly_cashflow).toFixed(2);
+        const annual = Number(metrics.annual_cashflow).toFixed(2);
+        const viable = metrics.is_viable;
 
         const badge = viable
           ? `<span class="badge badge-ok">Projet viable</span>`
           : `<span class="badge badge-ko">Projet NON viable</span>`;
 
         resultDiv.innerHTML = `
-          <div><strong>DSCR :</strong> ${dscr} ${badge}</div>
+          <div><strong>Projet :</strong> ${name}</div>
+          <div style="margin-top:0.4rem;">
+            <strong>DSCR :</strong> ${dscr} ${badge}
+          </div>
           <div><strong>Cash-flow mensuel :</strong> ${monthly} €</div>
           <div><strong>Cash-flow annuel :</strong> ${annual} €</div>
           <div style="margin-top:0.5rem; font-size:0.8rem; color:#9ca3af;">
-            Calcul basé sur les hypothèses financières du projet stockées dans Supabase.
+            Les données du projet et les hypothèses financières ont été enregistrées dans Supabase
+            avant le calcul.
+          </div>
+          <div style="margin-top:0.4rem; font-size:0.75rem; color:#6b7280;">
+            ID projet : <code>${projectId}</code>
           </div>
         `;
         resultDiv.style.display = "block";
       } catch (err) {
         console.error(err);
-        errorDiv.textContent = err.message;
+        errorDiv.textContent = err.message || "Erreur inattendue lors du calcul.";
       } finally {
         btn.disabled = false;
       }
     }
 
-    btn.addEventListener("click", calculate);
+    btn.addEventListener("click", handleCalculate);
   </script>
 </body>
 </html>

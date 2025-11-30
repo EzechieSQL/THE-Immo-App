@@ -295,8 +295,8 @@
     async function ensureAuth() {
       if (currentUser) return currentUser;
 
-      const email = "demo-user@immo-app.local";
-      const password = "DemoImmo123!";
+      const email = "test@immo.local";
+      const password = "TestImmo123!";
 
       let { data, error } = await supabase.auth.signInWithPassword({
         email,

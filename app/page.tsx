@@ -1,168 +1,227 @@
-'use client';
+ 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 
-// On définie les deux modes possibles : inscription ou connexion
-type Mode = 'signin' | 'signup';
+type ProjectSummary = {
+  id: string;
+  name: string | null;
+  postal_code: string | null;
+  price: number | null;
+  created_at: string;
+};
 
-export default function AuthPage() {
+export default function ProjectsHomePage() {
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [creatingProject, setCreatingProject] = useState(false);
 
-  // État de la page (mode, champs, erreurs, etc.)
-  const [mode, setMode] = useState<Mode>('signup');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  // Si l'utilisateur est déjà connecté, on le renvoie vers /app automatiquement
+  // Vérifier la session et charger les projets
   useEffect(() => {
-    const checkSession = async () => {
+    const init = async () => {
       const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        router.push('/app');
+      if (!data.session) {
+        router.push('/');
+        return;
       }
+      setUserEmail(data.session.user.email ?? null);
+      setChecking(false);
+      await fetchProjects();
     };
-    checkSession();
+
+    init();
   }, [router]);
 
-  // Gestion du submit (bouton principal)
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg(null);
+  const fetchProjects = async () => {
+    setLoadingProjects(true);
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, name, postal_code, price, created_at')
+      .order('created_at', { ascending: false });
 
-    try {
-      if (mode === 'signup') {
-        // Création de compte
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName || email.split('@')[0],
-            },
-          },
-        });
-
-        if (error) throw error;
-
-        // Selon la config Supabase, il peut y avoir un mail de confirmation
-        // Pour l'instant, on redirige directement vers /app
-        router.push('/app');
-      } else {
-        // Connexion
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-
-        router.push('/app');
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message ?? 'Erreur inconnue');
-    } finally {
-      setLoading(false);
+    if (!error && data) {
+      setProjects(data as ProjectSummary[]);
     }
+    setLoadingProjects(false);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+  };
+
+  const handleCreateProject = async () => {
+    setCreatingProject(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
+      if (!user) {
+        router.push('/');
+        return;
+      }
+
+      // Call server endpoint to create project (server validates ownership)
+      const res = await fetch('/api/projects/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const body = await res.json();
+      if (!res.ok) {
+        console.error(body);
+        setCreatingProject(false);
+        return;
+      }
+
+      router.push(`/app/projects/${body.id}`);
+    } finally {
+      setCreatingProject(false);
+    }
+  };
+  const handleDeleteProject = async (id: string) => {
+    const confirmDelete = window.confirm(
+      'Tu confirmes la suppression définitive de ce projet ?'
+    );
+    if (!confirmDelete) return;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) return;
+
+    const res = await fetch(`/api/projects/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id }),
+    });
+
+    if (!res.ok) {
+      console.error(await res.json());
+      return;
+    }
+
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  if (checking) {
+    return (
+      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p>Vérification de la session…</p>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50">
-      <div className="w-full max-w-md border border-slate-800 rounded-2xl p-6 shadow-xl bg-slate-900/80">
-        <h1 className="text-2xl font-semibold mb-1 text-center">
-          THE Immo App
-        </h1>
-        <p className="text-xs text-slate-400 mb-6 text-center">
-          Crée ton compte pour tester si ton projet immobilier tient la route.
-        </p>
-
-        {/* Boutons de switch entre inscription et connexion */}
-        <div className="flex mb-6 rounded-xl bg-slate-800 p-1">
-          <button
-            type="button"
-            className={`flex-1 py-2 rounded-xl text-sm ${
-              mode === 'signup' ? 'bg-slate-50 text-slate-900' : 'text-slate-300'
-            }`}
-            onClick={() => setMode('signup')}
-          >
-            Créer un compte
-          </button>
-          <button
-            type="button"
-            className={`flex-1 py-2 rounded-xl text-sm ${
-              mode === 'signin' ? 'bg-slate-50 text-slate-900' : 'text-slate-300'
-            }`}
-            onClick={() => setMode('signin')}
-          >
-            Se connecter
-          </button>
+    <main style={{ minHeight: '100vh', padding: '24px' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>
+            Tableau de bord – Projets immobiliers
+          </h1>
+          <p style={{ fontSize: '12px', marginTop: '4px' }}>
+            Connecté en tant que {userEmail}
+          </p>
         </div>
+        <button type="button" onClick={handleLogout}>
+          Déconnexion
+        </button>
+      </header>
 
-        {/* Formulaire */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'signup' && (
-            <div className="space-y-1">
-              <label className="text-sm text-slate-300">Nom complet</label>
-              <input
-                type="text"
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Optionnel"
-              />
-            </div>
-          )}
+      <section>
+        <h2 style={{ fontSize: '20px', marginBottom: '12px' }}>Mes projets</h2>
 
-          <div className="space-y-1">
-            <label className="text-sm text-slate-300">Email</label>
-            <input
-              type="email"
-              required
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-sm text-slate-300">Mot de passe</label>
-            <input
-              type="password"
-              required
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            />
-          </div>
-
-          {errorMsg && (
-            <p className="text-xs text-red-400">{errorMsg}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 rounded-xl py-2 text-sm font-medium bg-emerald-500 disabled:bg-emerald-800 disabled:cursor-not-allowed"
+        {loadingProjects ? (
+          <p>Chargement des projets…</p>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: '16px',
+              marginTop: '12px',
+            }}
           >
-            {loading
-              ? 'Traitement en cours…'
-              : mode === 'signup'
-              ? 'Créer mon compte'
-              : 'Me connecter'}
-          </button>
-        </form>
+            {/* Carte pour créer un nouveau projet */}
+            <button
+              type="button"
+              onClick={handleCreateProject}
+              disabled={creatingProject}
+              style={{
+                padding: '16px',
+                border: '1px dashed #999',
+                borderRadius: '8px',
+                background: '#fafafa',
+                cursor: 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>＋</div>
+              <div style={{ fontSize: '14px' }}>
+                {creatingProject ? 'Création en cours…' : 'Créer un nouveau projet'}
+              </div>
+            </button>
 
-        <p className="mt-4 text-[10px] text-slate-500 text-center">
-          Cette version est en beta : tu es officiellement cobaye fondateur.
-        </p>
-      </div>
+            {/* Liste des projets existants */}
+            {projects.map((project) => (
+              <div
+                key={project.id}
+                onClick={() => router.push(`/app/projects/${project.id}`)}
+                style={{
+                  padding: '16px',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  background: '#fff',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                  }}
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // éviter d’ouvrir le projet en même temps
+                      void handleDeleteProject(project.id);
+                    }}
+                    style={{
+                      fontSize: '11px',
+                      padding: '4px 6px',
+                      backgroundColor: '#fce4e4',
+                      border: '1px solid #f44336',
+                      color: '#b71c1c',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    Supprimer
+                  </button>
+                </div>
+
+                <h3 style={{ fontSize: '16px', margin: '0 0 8px' }}>
+                  {project.name || 'Projet sans nom'}
+                </h3>
+                <p style={{ fontSize: '12px', margin: '0 0 4px' }}>
+                  {project.postal_code
+                    ? `Code postal : ${project.postal_code}`
+                    : 'Code postal non renseigné'}
+                </p>
+                <p style={{ fontSize: '12px', margin: 0 }}>
+                  {project.price != null
+                    ? `Prix : ${project.price} €`
+                    : 'Prix non renseigné'}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
 import { parseNumber, calculateMonthlyPayment, calculateDSCR, getDSCRMessage } from '../../../lib/calculations';
@@ -101,7 +101,7 @@ export default function ProjectDetailPage() {
   };
 
   // === SAUVEGARDE EN BASE (utilisée par le bouton + l'auto-save) ===
-  const saveProject = async (): Promise<boolean> => {
+  const saveProject = useCallback(async (): Promise<boolean> => {
     if (!project) return false;
     setAutoSaveStatus('saving');
     setErrorMsg(null);
@@ -131,7 +131,7 @@ export default function ProjectDetailPage() {
     }
     setAutoSaveStatus('saved');
     return true;
-  };
+  }, [project]);
 
   // Auto-save avec délai (debounce) sur toute modification du projet
   useEffect(() => {
@@ -163,7 +163,7 @@ export default function ProjectDetailPage() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [project, hasLoaded]); // chaque modif relance le timer
+  }, [project, hasLoaded, saveProject]);
 
   const handleManualSave = async () => {
     await saveProject();

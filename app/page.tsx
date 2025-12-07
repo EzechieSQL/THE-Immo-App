@@ -9,9 +9,14 @@ export default function HomePage() {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        console.log('Checking session...');
         const { data } = await supabase.auth.getSession();
+        console.log('Session data:', data);
         if (data.session) {
+          console.log('User logged in, redirecting to /projects');
           router.push('/projects');
+        } else {
+          console.log('No session found');
         }
       } catch (error) {
         console.error('Session check error:', error);

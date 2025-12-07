@@ -11,6 +11,9 @@ function initSupabaseClient(): SupabaseClient {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
+  console.log('[Supabase] Initializing with URL:', supabaseUrl ? '✓ Set' : '✗ Missing');
+  console.log('[Supabase] Initializing with Anon Key:', supabaseAnonKey ? '✓ Set' : '✗ Missing');
+
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(
       'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables. Add them to your .env.local.'
@@ -18,6 +21,7 @@ function initSupabaseClient(): SupabaseClient {
   }
 
   supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  console.log('[Supabase] Client initialized successfully');
   return supabaseInstance;
 }
 

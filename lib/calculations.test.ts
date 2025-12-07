@@ -24,8 +24,8 @@ describe('Calculations', () => {
     it('should calculate monthly payment with basic values', () => {
       // Loan: 250,000€ at 3.5% for 25 years
       const payment = calculateMonthlyPayment(250000, 3.5, 25);
-      // Expected: ~1189.33€ per month
-      expect(payment).toBeCloseTo(1189.33, 1);
+      // Expected: ~1251.56€ per month
+      expect(payment).toBeCloseTo(1251.56, 1);
     });
 
     it('should return 0 for zero principal', () => {

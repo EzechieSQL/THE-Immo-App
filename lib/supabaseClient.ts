@@ -3,7 +3,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 let supabaseInstance: SupabaseClient | null = null;
 
-function getSupabaseClient(): SupabaseClient {
+function initSupabaseClient(): SupabaseClient {
   if (supabaseInstance) {
     return supabaseInstance;
   }
@@ -22,25 +22,25 @@ function getSupabaseClient(): SupabaseClient {
 }
 
 // Lazy-loaded client: only validates env vars when first used (not at build/import time)
-export function getSuapabaseClient(): SupabaseClient {
-  return getSupabaseClient();
+export function getSupabaseClient(): SupabaseClient {
+  return initSupabaseClient();
 }
 
 // For backward compatibility, export as named export with lazy getter
 export const supabase = {
   get auth() {
-    return getSupabaseClient().auth;
+    return initSupabaseClient().auth;
   },
   get from() {
-    return getSupabaseClient().from.bind(getSupabaseClient());
+    return initSupabaseClient().from.bind(initSupabaseClient());
   },
   get rpc() {
-    return getSupabaseClient().rpc.bind(getSupabaseClient());
+    return initSupabaseClient().rpc.bind(initSupabaseClient());
   },
   get storage() {
-    return getSupabaseClient().storage;
+    return initSupabaseClient().storage;
   },
   get realtime() {
-    return getSupabaseClient().realtime;
+    return initSupabaseClient().realtime;
   },
 } as SupabaseClient;
